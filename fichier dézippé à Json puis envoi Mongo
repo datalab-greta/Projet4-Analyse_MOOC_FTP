@@ -1,0 +1,45 @@
+import sys, glob, zipfile, json, ast, demjson,os
+from demjson import decode
+import configparser
+from pymongo import MongoClient
+
+
+config = configparser.ConfigParser()
+config.read_file(open(os.path.expanduser("datalab.cnf")))
+
+CNF = "mongo"
+BDD = "Datalab"
+
+########## Ouverture connection -> mongo sur serveur##########
+client = MongoClient('mongodb://%s:%s@%s/?authSource=%s' % (config[CNF]['user'], config[CNF]['password'], config[CNF]['host'], BDD))
+print(client)
+
+bdd = client['Datalab'] # BDD "Datalab" de mongoDB sur serveur
+bdd
+#print("'Datalab' Collections:")    
+collec = client['MOOC_GRP_FTP']['Zip_to_mongo1bis']
+
+
+###########dezippage###############
+#script pour envoyer tous les fichiers dézippé d'un dossier en text vers json
+
+rootdir = '/home/fabien/Bureau/projet4/fichier_depart/'
+
+for subdir, dirs, list_file in os.walk(rootdir):
+    for file in list_file:
+            # Definition du chemin de fichier
+            with open(os.path.join(subdir, file),'r',encoding="utf8") as f:
+                try:
+                    content= f.read()             
+                    # convert into JSON:
+                    #x2 = json.dumps(content) fonctionne pas
+                    x=ast.literal_eval(content)  #fonction pour transformer str en json
+                    print(type(x))
+                            
+              #insertion dans Mongo en Json
+           
+            
+                    collec.insert_one(x) 
+                except:
+                    pass
+                    #print("#####") 
